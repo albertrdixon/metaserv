@@ -219,7 +219,7 @@ type Kubernetes struct{}
 func (k Kubernetes) Name() string { return "kubernetes" }
 
 func (k Kubernetes) Start(ctx context.Context, out chan Datum) {
-	go dsExec(ouot, k)
+	go dsExec(out, k)
 }
 
 func (k Kubernetes) Generate() interface{} {
@@ -234,7 +234,7 @@ type Consul struct{}
 func (k Consul) Name() string { return "consul" }
 
 func (k Consul) Start(ctx context.Context, out chan Datum) {
-	go dsExec(ouot, k)
+	go dsExec(out, k)
 }
 
 func (k Consul) Generate() interface{} {
