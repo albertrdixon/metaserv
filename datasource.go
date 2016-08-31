@@ -21,9 +21,12 @@ type DataSource interface {
 
 var sources = []DataSource{
 	OSRelease{},
+	CoreosConfig{},
 	Docker{},
 	Etcd{},
 	Fleet{},
+	Kubernetes{},
+	Consul{},
 	Uname{},
 }
 
@@ -100,6 +103,26 @@ func (o OSRelease) Generate() interface{} {
 	return d
 }
 
+type CoreosConfig struct{}
+
+func (c CoreosConfig) Name() string { return "coreos-config" }
+
+func (c CoreosConfig) Start(ctx context.Context, out chan Datum) {
+	go dsExec(out, c)
+}
+
+func (c CoreosConfig) Generate() interface{} {
+	d := make(map[string]string)
+	f, err := os.Open("/etc/coreos/update.conf")
+	if err != nil {
+		log.Printf("/etc/coreos/update.conf not read.")
+		return nil
+	}
+	defer f.Close()
+	ComposeReader(f, d, SplitOnString("="), TupleToMap())
+	return d
+}
+
 // docker. Reads `docker info`
 type Docker struct{}
 
@@ -112,7 +135,7 @@ func (d Docker) Start(ctx context.Context, out chan Datum) {
 func (d Docker) Generate() interface{} {
 	out, err := exec.Command("docker", "version").Output()
 	if err != nil {
-		log.Printf("`Docker version` returned error.")
+		log.Printf("`docker version` returned error.")
 		return nil
 	}
 	r := bytes.NewBuffer(out)
@@ -188,5 +211,35 @@ func (u Uname) Generate() interface{} {
 		out, _ := exec.Command("uname", cmd.flag).Output()
 		m[cmd.key] = strings.TrimSpace(string(out))
 	}
+	return m
+}
+
+type Kubernetes struct{}
+
+func (k Kubernetes) Name() string { return "kubernetes" }
+
+func (k Kubernetes) Start(ctx context.Context, out chan Datum) {
+	go dsExec(ouot, k)
+}
+
+func (k Kubernetes) Generate() interface{} {
+	m := make(map[string]string)
+	out, _ := exec.Command("/opt/bin/kube-apiserver", "--version").Output()
+	m["version"] = strings.Fields(string(out))[1]
+	return m
+}
+
+type Consul struct{}
+
+func (k Consul) Name() string { return "consul" }
+
+func (k Consul) Start(ctx context.Context, out chan Datum) {
+	go dsExec(ouot, k)
+}
+
+func (k Consul) Generate() interface{} {
+	m := make(map[string]string)
+	out, _ := exec.Command("/opt/bin/consul", "--version").Output()
+	m["version"] = strings.Fields(string(out))[1]
 	return m
 }

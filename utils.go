@@ -55,7 +55,7 @@ func TupleToMap() AggFunc {
 	return func(data interface{}, lineData interface{}) {
 		line := lineData.([]string)
 		m := data.(map[string]string)
-		m[line[0]] = line[1]
+		m[line[0]] = strings.TrimSpace(line[1])
 	}
 }
 
