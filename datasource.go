@@ -224,8 +224,16 @@ func (k Kubernetes) Start(ctx context.Context, out chan Datum) {
 
 func (k Kubernetes) Generate() interface{} {
 	m := make(map[string]string)
-	out, _ := exec.Command("/opt/bin/kube-apiserver", "--version").Output()
-	m["version"] = strings.Fields(string(out))[1]
+	out, e := exec.Command("/opt/bin/kube-apiserver", "--version").Output()
+	if e != nil {
+		log.Printf("`/opt/bin/kube-apiserver` returned error: %v", e)
+		return nil
+	}
+	fields := strings.Fields(string(out))
+	if len(fields) < 2 {
+		return nil
+	}
+	m["version"] = fields[1]
 	return m
 }
 
@@ -239,7 +247,15 @@ func (k Consul) Start(ctx context.Context, out chan Datum) {
 
 func (k Consul) Generate() interface{} {
 	m := make(map[string]string)
-	out, _ := exec.Command("/opt/bin/consul", "--version").Output()
-	m["version"] = strings.Fields(string(out))[1]
+	out, e := exec.Command("/opt/bin/consul", "--version").Output()
+	if e != nil {
+		log.Printf("`/opt/bin/consul --version` returned error: %v", e)
+		return nil
+	}
+	fields := strings.Fields(string(out))
+	if len(fields) < 2 {
+		return nil
+	}
+	m["version"] = fields[1]
 	return m
 }
